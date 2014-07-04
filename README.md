@@ -1,4 +1,5 @@
-YouHosting_Gamma_API
-====================
+YouHosting API
+==============
+This is a modified version of the YouHosting API by Maarten Eyskens.
 
-API used for interfacing with the YouHosting control panel servers. This project is not affiliated in any way with Hostinger International Ltd. 
+Modified and extended by Grendel Media/Hans.
