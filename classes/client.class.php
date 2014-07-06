@@ -26,7 +26,6 @@ class client{
 	private $yh;
 	private $email;
 	private $id;
-    private $balance;
 	
 	function __construct($connector){
 		$this->yh = $connector;
@@ -44,8 +43,6 @@ class client{
 		} else {
 			throw new Exception("Unable to find the client ID. Are you sure the email is valid?");
 		}
-        
-        $this->email = $this->yh->getBetween($page,'<td><a class="jdax" title="New ticket" href="/en/client-support/new-client-ticket/id/'.$this->id.'">','</a></td>');
 	}
     
 	public function linkId($id){
@@ -113,6 +110,14 @@ class client{
         if(!empty($this->email)){
             return $this->email;
         }
+        
+        $output = $this->yh->get("http://www.youhosting.com/en/client/view/id/".$this->id);
+        
+        $email = $this->yh->getBetween($output, '<td><a class="jdax" title="New ticket" href="/en/client-support/new-client-ticket/id/'.$this->id.'">', '</a></td>');
+        
+        $this->email = $email;
+        
+        return $email;
     }
     
     /**

@@ -158,6 +158,7 @@ if($_REQUEST['action'] == "fetchEmails"){
         $client = new Client($connector);
         $client->linkId($id);
         $email = $client->getEmail();
+        var_dump($email);
         $query = "UPDATE emails SET email=:email WHERE id=:id";
 		$queryParams = array(':email' => $email, ':id' => $id);
 		
