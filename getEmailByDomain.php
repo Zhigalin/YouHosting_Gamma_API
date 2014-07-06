@@ -1,6 +1,6 @@
 <?php
 /*
- * index.php
+ * getEmailByDomain.php
  * 
  * Copyright 2014 Hans <hans@grendelhosting.com>
  * 
@@ -21,14 +21,14 @@
  * 
  * 
  */
+ 
+require("./loader.php");
 
-require('./loader.php');
-
-echo "Succesfully connected to YouHosting<br>";
-
-$client = new Client($connector);
-echo "Number of clients: ".$client->getCount()."<br>";
-
-$account = new Account($connector);
-echo "Number of accounts: ".$account->getCount()." of which ".$account->getCountActive()." are active";
-
+try{
+    $account = new Account($connector);
+    $account->linkDomain($_GET['domain']);
+    $client = $account->getClient();
+    echo $client->getEmail();
+} catch (Exception $e){
+    die($e->getMessage());
+}
