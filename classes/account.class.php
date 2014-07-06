@@ -101,7 +101,7 @@ class account{
 		
 	}
 		
-	public function delete(){
+	public function deleteAccount(){
 		$this->yh->get("http://www.youhosting.com/en/client-account/delete/id/".$this->id);
 	}
     
