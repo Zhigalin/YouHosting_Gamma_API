@@ -1,6 +1,6 @@
 <?php
 /*
- * getemails.php
+ * suspendByEmail.php
  * 
  * Copyright 2014 Hans <hans@grendelhosting.com>
  * 
@@ -24,8 +24,13 @@
  
 require("./loader.php");
 
+// configuration stuff
+$blockedDomains = array("yandex.ru", "yandex.kz", "yandex.by", "ya.ru", "yandex.com", "yandex.ua", "narod.ru"); // the list of blocked domains
+$from = "2014-07-01"; // the starting date to look at
+$to = ""; // the ending date to look at
+
 function initializeDatabase($db){
-	$query = "CREATE TABLE emails (id int PRIMARY KEY, email varchar(255))";
+	$query = "CREATE TABLE emails (id int PRIMARY KEY)";
 	try {
 		$stmt = $db->prepare($query);
 		$result = $stmt->execute();
@@ -60,7 +65,7 @@ if(empty($_REQUEST['action'])){
 		initializeDatabase($db);
 	}
 	
-	echo "Welcome to the email list script. This script will generate a list of e-mail addresses from your YouHosting account.<br>If the script dies because of the script execution timeout, simply hit F5 to restart the script and it will continue where it left off.<br>";
+	echo "Welcome to the suspension script. This script will suspend all clients and accounts who signed up between the dates you provided and using an email address under the domains you listed.<br>If the script dies because of the script execution timeout, simply hit F5 to restart the script and it will continue where it left off.<br>";
 	echo '<form action="" method="get"><input type="hidden" name="action" value="importClients"><input type="submit" value="Start"></form>';
 	die();
 }
@@ -80,7 +85,7 @@ if($_REQUEST['action'] == "importClients"){
         $row = $stmt->fetch();
         $page = $row['value'];
         
-        $output = $connector->get("http://www.youhosting.com/en/client/manage/page/".$page."?email=&ip=&name=&domain=&from=&username=&status=any&to=&id=&submit=Search&pager_controller=client&pager_action=manage&is_list=0");
+        $output = $connector->get("http://www.youhosting.com/en/client/manage/page/".$page."?email=&ip=&name=&domain=&from=".$from."&username=&status=any&to=".$to."&id=&submit=Search&pager_controller=client&pager_action=manage&is_list=0");
         
         $output = $connector->getBetween($output,"</thead>
 
@@ -137,12 +142,12 @@ if($_REQUEST['action'] == "importClients"){
     }
     
     echo "Clients Imported<br>";
-	echo "We now have a list of client ID's, and with that we can fetch the e-mail addresses. Depending on the number of accounts and the speed of YouHosting's server, this can take a long time to complete. If you hit the script execution timeout, simply refresh the page (and resubmit content if asked) and the script should pick up where it left off.<br>";
-	echo '<form action="" method="get"><input type="hidden" name="action" value="fetchEmails"><input type="submit" value="Get Emails"></form>';
+	echo "We now have a list of client ID's, and with that we can fetch the e-mail addresses and check them. Depending on the number of accounts and the speed of YouHosting's server, this can take a long time to complete. If you hit the script execution timeout, simply refresh the page (and resubmit content if asked) and the script should pick up where it left off.<br>";
+	echo '<form action="" method="get"><input type="hidden" name="action" value="suspendClients"><input type="submit" value="Suspend"></form>';
 }
 
-if($_REQUEST['action'] == "fetchEmails"){	
-	$query = "SELECT id FROM emails WHERE email IS NULL";
+if($_REQUEST['action'] == "suspendClients"){	
+	$query = "SELECT id FROM emails";
 	
 	try{
 		$stmt = $db->prepare($query);
@@ -157,9 +162,17 @@ if($_REQUEST['action'] == "fetchEmails"){
         $id = $row['id'];
         $client = new Client($connector);
         $client->linkId($id);
+        
         $email = $client->getEmail();
-        $query = "UPDATE emails SET email=:email WHERE id=:id";
-		$queryParams = array(':email' => $email, ':id' => $id);
+        
+        $emailParts = explode("@", $email);
+        
+        if(!empty($emailParts[1]) && in_array($emailParts[1],$blockedDomains)){
+            $client->suspend(1,1,'abuse','Spam');
+        }
+        
+        $query = "DELETE FROM emails WHERE id=:id";
+		$queryParams = array(':id' => $id);
 		
 		try{
 			$stmt = $db->prepare($query);
@@ -169,34 +182,7 @@ if($_REQUEST['action'] == "fetchEmails"){
 		}
     }
 	
-    echo "Emails imported<br>";
-    echo "We now have a list of e-mail addresses in the database. In the next step, we will write those emails to a file called \"emails.csv\", which you can then import to your favorite bulk e-mail software.<br>";
-    echo "MAKE SURE THE WEBSERVER CAN WRITE EMAILS.CSV. You can do this by creating a blank text file called emails.csv and giving it permission 777.<br>";
-	echo '<form action="" method="get"><input type="hidden" name="action" value="generateCSV"><input type="submit" value="Generate CSV"></form>';
-}
-
-if($_REQUEST['action'] == "generateCSV"){	
-	$query = "SELECT email FROM emails";
-	
-	try{
-		$stmt = $db->prepare($query);
-		$result = $stmt->execute();
-	} catch(PDOException $e){
-		die("Database Error: ".$e->getMessage());
-	}
-	
-	$array = $stmt->fetchAll();
-    
-    foreach($array as $row){
-        $id = $row['email'];
-        $result = file_put_contents("emails.csv",$id."\n",FILE_APPEND);
-        if(!$result){
-            die("error while writing file");
-        }
-    }
-	
-    echo "CSV generated<br>";
-    echo "We've succesfully written the e-mails to emails.csv (please check the file exists and contains addresses). All we need to do now is clean up the database. Click the button below to continue.<br>";
+    echo "Clients suspended<br>";
 	echo '<form action="" method="get"><input type="hidden" name="action" value="cleanup"><input type="submit" value="Clean Up"></form>';
 }
 
