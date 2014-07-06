@@ -96,6 +96,11 @@ class account{
 		return $client;
 	}
 	
+	/*  createAccount = work in progress  */
+	public function createAccount(){
+		
+	}
+		
 	public function delete(){
 		$this->yh->get("http://www.youhosting.com/en/client-account/delete/id/".$this->id);
 	}
