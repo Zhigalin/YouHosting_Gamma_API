@@ -1,4 +1,26 @@
-
-config.php
-
+#temp files
+*~
+*.swp
+#linux trash folder which might appear on any partition or disk
+.Trash-*
+#kate
+*.kate-swp
+*swp.*
+.*.kate-swp
+.swp.*
+.kateproject
+.kateproject.d/
+#backup directory
+.bak/
+#sublime text
+*.sublime-workspace
+*.sublime-project
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+#file manager's config for this directory
+.directory
+# sftp configuration file
+sftp-config.json
+#user configuration should not be saved
 config.php
